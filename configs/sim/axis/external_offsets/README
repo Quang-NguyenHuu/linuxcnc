@@ -1,0 +1,3 @@
+eoffset_demo.ini ----- demo (XYZ)
+jwp_z.ini ------------ jog while paused (Z)
+dynamic_offsets.ini -- Z offset waveforms

@@ -1,0 +1,43 @@
+loadrt siggen         names=gen
+loadrt scale          names=scalea
+loadrt conv_float_s32 names=cvt
+loadrt not            names=nota
+loadrt or2            names=or2a
+
+addf   gen.update     servo-thread
+addf   scalea         servo-thread
+addf   cvt            servo-thread
+addf   nota           servo-thread
+addf   or2a           servo-thread
+
+setp gen.offset       0.0
+
+# scaling -----------------------------------------------------------
+# these should be reciprocals:
+# 1 unit (inch)  --> 10000 counts
+setp axis.z.eoffset-scale     0.0001
+setp scalea.gain          10000
+
+net  e:panel-amplitude  <= pyvcp.gen-amplitude     => gen.amplitude
+net  e:panel-frequency  <= pyvcp.gen-frequency     => gen.frequency
+
+# can also use sawtooth (others inappropriate on a reset)
+net  G:waveform         <= gen.sine                => scalea.in
+net  G:swaveform        <= scalea.out              => cvt.in
+net  G:counts           <= cvt.out                 => axis.z.eoffset-counts
+
+net  e:panel-enable     <= pyvcp.z-enable          => axis.z.eoffset-enable
+net  e:panel-enable                                => nota.in
+
+net  e:panel-disable    <= nota.out                => or2a.in1
+
+net  e:panel-z-offset   <= axis.z.eoffset          => pyvcp.z-offset-f
+net  e:panel-limited    <= motion.eoffset-limited  => pyvcp.limited
+
+net  e:panel-reset      <= pyvcp.reset             => or2a.in0
+
+net  e:panel-ini-accel <= pyvcp.ini-accel          => ini.z.max_acceleration
+net  e:panel-ini-vel   <= pyvcp.ini-vel            => ini.z.max_velocity
+
+net  G:reset           <= or2a.out                 => axis.z.eoffset-clear
+net  G:reset                                       => gen.reset
